@@ -104,7 +104,7 @@ class CrosswordCreator:
          constraints; in this case, the length of the word.)
         """
         for variable in self.domains:
-            words_copy = self.domains[variable][:]
+            words_copy = set(self.domains[variable])
             for word in words_copy:
                 if not len(word) == variable.length:
                     self.domains[variable].remove(word)
@@ -120,12 +120,12 @@ class CrosswordCreator:
         """
         revised = False
 
-        if (x, y) in self.crossword.overlaps:
-            x_index = self.crossword.overlaps[x, y][0]
-            y_index = self.crossword.overlaps[x, y][1]
+        overlap = self.crossword.overlaps.get((x, y))
+        if overlap is not None:
+            (x_index, y_index) = overlap
 
             # iterate across x's domain
-            x_words_copy = self.domains[x][:]
+            x_words_copy = set(self.domains[x])
             for x_word in x_words_copy:
                 satisfies = False
                 for y_word in self.domains[y]:
@@ -150,13 +150,14 @@ class CrosswordCreator:
         """
         # Initialise queue
         queue = []
-        if arcs:
+        if arcs is not None:
             queue.extend(arcs)
         else:
             # Populate queue with all arcs in CSP
-            for x, y in self.crossword.overlaps:
-                queue.append((x, y))
-                queue.append((y, x))
+            for (x, y), overlap in self.crossword.overlaps.items():
+                if overlap is not None:
+                    queue.append((x, y))
+                    queue.append((y, x))
 
         while queue:
             (x, y) = queue.pop(0)
@@ -193,11 +194,12 @@ class CrosswordCreator:
 
         # Check all values don't conflict
         overlaps = self.crossword.overlaps
-        for x, y in overlaps:
-            if x in assignment and y in assignment:
-                (x_index, y_index) = overlaps[x, y]
-                if not assignment[x][x_index] == assignment[y][y_index]:
-                    return False
+        for (x, y), overlap in overlaps.items():
+            if overlap:
+                if x in assignment and y in assignment:
+                    (x_index, y_index) = overlap
+                    if not assignment[x][x_index] == assignment[y][y_index]:
+                        return False
 
         return True
 
@@ -222,9 +224,9 @@ class CrosswordCreator:
                     continue
 
                 # Assume there is an overlap between neighbors
-                overlap = self.overlaps.get((var, neighbor))
-                if not overlap:
-                    overlap = self.overlaps.get((neighbor, var))
+                overlap = self.crossword.overlaps.get((var, neighbor))
+                if overlap is None:
+                    overlap = self.crossword.overlaps.get((neighbor, var))
                     var_index, neighbor_index = overlap[1], overlap[0]  # swap
                 else:
                     var_index, neighbor_index = overlap
@@ -279,7 +281,26 @@ class CrosswordCreator:
 
         If no assignment is possible, return None.
         """
-        raise NotImplementedError
+        if self.assignment_complete(assignment):
+            return assignment
+
+        var = self.select_unassigned_variable(assignment)
+
+        for value in self.order_domain_values(var, assignment):
+            assignment[var] = value
+
+            if self.consistent(assignment):
+                # Recursively call backtrack on updated assignment
+                result = self.backtrack(assignment)
+
+                if result is not None:
+                    return result
+
+            # If var not consistent or no successful result remove var
+            del assignment[var]
+
+        # If no  successful assignment found return None for failure
+        return None
 
 
 def main():
