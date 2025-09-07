@@ -35,7 +35,7 @@ def main():
     model.fit(x_train, y_train, epochs=EPOCHS)
 
     # Evaluate neural network performance
-    model.evaluate(x_test,  y_test, verbose=2)
+    model.evaluate(x_test, y_test, verbose=2)
 
     # Save model to file
     if len(sys.argv) == 3:
@@ -67,7 +67,9 @@ def load_data(data_dir):
     for category in sorted_categories:
         category_path = os.path.join(data_dir, str(category))
 
-        image_paths = [os.path.join(category_path, f) for f in os.listdir(category_path)]
+        image_paths = [
+            os.path.join(category_path, f) for f in os.listdir(category_path)
+        ]
 
         for image_path in image_paths:
             if os.path.isfile(image_path):
@@ -76,8 +78,9 @@ def load_data(data_dir):
                     image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))
                     images.append(image)
                     labels.append(category)
-                    
+
     return (images, labels)
+
 
 def get_model():
     """
@@ -85,8 +88,36 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    raise NotImplementedError
+    # Create a convolutional neaural network
+    model = tf.keras.models.Sequential(
+        [
+            # Convolution and pooling layers
+            tf.keras.layers.Conv2D(
+                32, (3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)
+            ),
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            tf.keras.layers.Conv2D(128, (3, 3), activation="relu"),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            # Flatten to pass into rest of neural network
+            tf.keras.layers.Flatten(),
+            # Hidden layer
+            tf.keras.layers.Dense(128, activation="relu"),
+            # Dropout to prevent overfitting
+            tf.keras.layers.Dropout(0.5),
+            # Output layer
+            tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax"),
+        ]
+    )
+
+    # Train neural network
+    model.compile(
+        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+
+    return model
 
 
-#if __name__ == "__main__":
-#    main()
+if __name__ == "__main__":
+    main()
