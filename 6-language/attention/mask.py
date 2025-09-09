@@ -28,7 +28,9 @@ def main():
 
     # Use model to process input
     model = TFBertForMaskedLM.from_pretrained(MODEL)
-    result = model(**inputs, output_attentions=True)
+]\
+        
+        +;/    result = model(**inputs, output_attentions=True)
 
     # Generate predictions
     mask_token_logits = result.logits[0, mask_token_index]
@@ -60,7 +62,7 @@ def get_color_for_attention_score(attention_score):
     Return a tuple of three integers representing a shade of gray for the
     given `attention_score`. Each value should be in the range [0, 255].
     """
-    rgb_value = round(attention_score * 255)
+    rgb_value = int(attention_score * 255)
     return (rgb_value, rgb_value, rgb_value)
 
 
