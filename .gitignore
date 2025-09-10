@@ -1,4 +1,11 @@
 __pycache__/
 *.pyc
 venv/
+.venv/
 gtsrb/
+*.py[cod]
+*.pyo
+.env
+.ipynb_checkpoints/
+.DS_Store
+*.png

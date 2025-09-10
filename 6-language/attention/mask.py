@@ -28,9 +28,8 @@ def main():
 
     # Use model to process input
     model = TFBertForMaskedLM.from_pretrained(MODEL)
-]\
-        
-        +;/    result = model(**inputs, output_attentions=True)
+
+    result = model(**inputs, output_attentions=True)
 
     # Generate predictions
     mask_token_logits = result.logits[0, mask_token_index]
@@ -76,9 +75,12 @@ def visualize_attentions(tokens, attentions):
     include both the layer number (starting count from 1) and head number
     (starting count from 1).
     """
-    # TODO: Update this function to produce diagrams for all layers and heads.
-    generate_diagram(1, 1, tokens, attentions[0][0][0])
-
+    for layer_index, layer_attention in enumerate(attentions):
+        num_heads = layer_attention.shape[1]
+        for head_index in range(num_heads):
+            head_attention = layer_attention[0, head_index]
+            generate_diagram(layer_index + 1, head_index + 1, tokens, head_attention)
+ 
 
 def generate_diagram(layer_number, head_number, tokens, attention_weights):
     """
